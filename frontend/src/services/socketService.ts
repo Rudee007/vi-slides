@@ -210,6 +210,40 @@ class SocketService {
             this.socket.off('celebration');
         }
     }
+
+    // New Interaction Features
+    emitEmojiReaction(sessionCode: string, emoji: string, user: any) {
+        if (this.socket) this.socket.emit('emoji_reaction', { sessionCode, emoji, user });
+    }
+    onStreamEmoji(callback: (data: any) => void) {
+        if (this.socket) this.socket.on('stream_emoji', callback);
+    }
+    offStreamEmoji() {
+        if (this.socket) this.socket.off('stream_emoji');
+    }
+
+    emitSaveBookmark(userId: string, sessionCode: string, sessionTitle: string) {
+        if (this.socket) this.socket.emit('save_bookmark', { userId, sessionCode, sessionTitle });
+    }
+    onBookmarkSaved(callback: (data: any) => void) {
+        if (this.socket) this.socket.on('bookmark_saved', callback);
+    }
+
+    emitTriggerSpotlight(sessionCode: string, teacherId: string) {
+        if (this.socket) this.socket.emit('trigger_spotlight', { sessionCode, teacherId });
+    }
+    onSpotlightResult(callback: (data: any) => void) {
+        if (this.socket) this.socket.on('spotlight_result', callback);
+    }
+    onSpotlightError(callback: (data: any) => void) {
+        if (this.socket) this.socket.on('spotlight_error', callback);
+    }
+    offSpotlightEvents() {
+        if (this.socket) {
+            this.socket.off('spotlight_result');
+            this.socket.off('spotlight_error');
+        }
+    }
 }
 
 export const socketService = new SocketService();

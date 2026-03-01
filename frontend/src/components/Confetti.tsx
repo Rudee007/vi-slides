@@ -1,14 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 
 interface ConfettiProps {
+    active?: boolean;
     duration?: number;
     onComplete?: () => void;
 }
 
-const Confetti: React.FC<ConfettiProps> = ({ duration = 5000, onComplete }) => {
+const Confetti: React.FC<ConfettiProps> = ({ active = true, duration = 5000, onComplete }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
+        if (!active) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -80,7 +82,9 @@ const Confetti: React.FC<ConfettiProps> = ({ duration = 5000, onComplete }) => {
             cancelAnimationFrame(animationId);
             window.removeEventListener('resize', handleResize);
         };
-    }, []);
+    }, [active, duration, onComplete]);
+
+    if (!active) return null;
 
     return (
         <canvas

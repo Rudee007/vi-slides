@@ -9,6 +9,11 @@ export interface IUser extends Document {
     googleId?: string;
     avatar?: string;
     points: number;
+    bookmarks: {
+        sessionTitle: string;
+        sessionCode: string;
+        timestamp: Date;
+    }[];
     createdAt: Date;
     comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -53,6 +58,11 @@ const userSchema = new Schema<IUser>({
         type: Number,
         default: 0
     },
+    bookmarks: [{
+        sessionTitle: String,
+        sessionCode: String,
+        timestamp: { type: Date, default: Date.now }
+    }],
     createdAt: {
         type: Date,
         default: Date.now

@@ -170,6 +170,56 @@ export const initSocket = (server: HttpServer) => {
                 console.error('❌ Pulse check reward error:', error);
             }
         });
+
+        // 1. Emoji Reaction
+        socket.on('emoji_reaction', ({ sessionCode, emoji, user }) => {
+            io.to(sessionCode).emit('stream_emoji', { emoji, user, id: Math.random().toString(36).substr(2, 9) });
+        });
+
+        // 2. Save Bookmark
+        socket.on('save_bookmark', async ({ userId, sessionCode, sessionTitle }) => {
+            try {
+                await User.findByIdAndUpdate(userId, {
+                    $push: {
+                        bookmarks: { sessionTitle, sessionCode, timestamp: new Date() }
+                    }
+                });
+                socket.emit('bookmark_saved', { success: true });
+            } catch (error) {
+                console.error('Bookmark error:', error);
+                socket.emit('bookmark_saved', { success: false });
+            }
+        });
+
+        // 3. Trigger Mystery Spotlight
+        socket.on('trigger_spotlight', async ({ sessionCode, teacherId }) => {
+            // Get all unique users in this session from socketMap
+            // Use a Map to deduplicate by userId
+            const uniqueStudentsMap = new Map();
+
+            for (const [sId, data] of socketMap.entries()) {
+                // Filter: must be in same session AND not be the teacher
+                // Use .toString() to ensure we compare strings (handles both string and ObjectId)
+                if (data.sessionCode === sessionCode && data.userId.toString() !== teacherId.toString()) {
+                    uniqueStudentsMap.set(data.userId.toString(), { id: data.userId, name: data.name });
+                }
+            }
+
+            const sessionUsers = Array.from(uniqueStudentsMap.values());
+
+            if (sessionUsers.length === 0) {
+                socket.emit('spotlight_error', { message: 'No active students to spotlight!' });
+                return;
+            }
+
+            // Pick a random student
+            const winner = sessionUsers[Math.floor(Math.random() * sessionUsers.length)];
+
+            console.log(`🎯 Spotlight winner in ${sessionCode}: ${winner.name} (Choice from ${sessionUsers.length} students)`);
+
+            // Broadcast the result to everyone in the room
+            io.to(sessionCode).emit('spotlight_result', { winner, spinDuration: 3000 });
+        });
     });
 
     return io;
