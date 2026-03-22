@@ -450,7 +450,6 @@ class SocketService {
         if (this.socket) this.socket.off('receive_private_msg');
     }
 
-    // Pulse Check Events
     emitPulseCheckInit(sessionCode: string) {
         if (this.socket) this.socket.emit('pulse_check_init', { sessionCode });
     }

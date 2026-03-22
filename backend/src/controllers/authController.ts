@@ -1,15 +1,16 @@
-import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
-import { OAuth2Client } from 'google-auth-library';
 import User, { IUser } from '../models/User';
-
+import { Request, Response } from 'express';
+import { OAuth2Client } from 'google-auth-library';
 // Augment express-serve-static-core
 declare module 'express-serve-static-core' {
     interface Request {
         user?: IUser;
     }
 }
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Generate JWT Token
 const generateToken = (id: string): string => {
@@ -82,9 +83,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
+
 export const login = async (req: Request, res: Response): Promise<void> => {
     try {
         // Check for validation errors
@@ -141,9 +140,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-// @desc    Get current logged in user
-// @route   GET /api/auth/me
-// @access  Private
+
 export const getMe = async (req: Request, res: Response): Promise<void> => {
     try {
         if (!req.user) {
@@ -172,9 +169,7 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-// @desc    Update user details
-// @route   PUT /api/auth/updatedetails
-// @access  Private
+
 export const updateDetails = async (req: Request, res: Response): Promise<void> => {
     try {
         if (!req.user) {
@@ -231,62 +226,75 @@ export const updateDetails = async (req: Request, res: Response): Promise<void> 
     }
 };
 
-// @desc    Login with Google
-// @route   POST /api/auth/google
-// @access  Public
+
 export const googleLogin = async (req: Request, res: Response): Promise<void> => {
     try {
         const { token, role } = req.body;
-        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-        // Verify the token
-        const ticket = await client.verifyIdToken({
-            idToken: token,
-            audience: process.env.GOOGLE_CLIENT_ID
-        });
+        if (!token) {
+            res.status(400).json({ success: false, message: 'Google credential token is required' });
+            return;
+        }
+
+        let ticket;
+ 
+        try {
+            ticket = await client.verifyIdToken({
+                idToken: token,
+                audience: process.env.GOOGLE_CLIENT_ID
+            });
+        } catch (verificationError) {
+            console.error('Google token verification failed:', verificationError);
+            res.status(401).json({ success: false, message: 'Invalid or expired Google token' });
+            return;
+        }
 
         const payload = ticket.getPayload();
-        if (!payload) {
-            res.status(400).json({ success: false, message: 'Invalid Google Token' });
+        if (!payload || !payload.email) {
+            res.status(400).json({ success: false, message: 'Google token missing required profile information' });
             return;
         }
 
         const { email, name, sub: googleId, picture } = payload;
 
-        if (!email) {
-            res.status(400).json({ success: false, message: 'Google token missing email' });
-            return;
-        }
-
         // Check if user exists
         let user = await User.findOne({ email });
 
         if (!user) {
-            // Register new user
-            const userRole = role === 'Teacher' || role === 'Student' ? role : 'Student';
+            // FIX 4: Strict Enum checking for roles. 
+            // This prevents someone from sending {"role": "Admin"} in Postman and bypassing your security.
+            const validRoles = ['Teacher', 'Student'];
+            const assignedRole = validRoles.includes(role) ? role : 'Student';
 
+            // Register new user
             user = await User.create({
-                name,
-                email,
+                name: name || 'Google User', // FIX 5: Fallback. Google users don't always have a name set.
+                email: email.toLowerCase(),  // FIX 6: Normalize email casing to match your Mongoose schema
                 googleId,
-                role: userRole,
-                avatar: picture
+                role: assignedRole,
+                avatar: picture || ''
             });
         } else {
-            // If user exists but has no googleId or avatar, update it
-            let updated = false;
+            // If user exists, link Google ID and update avatar if missing
+            // SECURITY NOTE: Notice we do NOT update the role here. 
+            // This prevents a Student from re-authenticating and changing their role to Teacher.
+            let requiresSave = false;
+            
             if (!user.googleId) {
                 user.googleId = googleId;
-                updated = true;
+                requiresSave = true;
             }
             if (picture && !user.avatar) {
                 user.avatar = picture;
-                updated = true;
+                requiresSave = true;
             }
-            if (updated) await user.save();
+            
+            if (requiresSave) {
+                await user.save();
+            }
         }
 
-        // Generate token
+        // Generate application token
         const appToken = generateToken(user._id.toString());
 
         res.status(200).json({
@@ -302,13 +310,15 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
         });
 
     } catch (error) {
-        console.error('Google login error:', error);
+        // FIX 7: This catch block is now reserved ONLY for true server/database failures.
+        console.error('Unexpected Server Error during Google login:', error);
         res.status(500).json({
             success: false,
             message: 'Server error during Google login'
         });
     }
 };
+
 
 // @desc    Get top users by points
 // @route   GET /api/auth/leaderboard

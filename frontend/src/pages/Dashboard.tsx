@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { sessionService } from '../services/sessionService';
 
+
 import { useTheme } from '../contexts/ThemeContext';
 
 import CertificateCard from '../components/CertificateCard';
@@ -34,8 +35,7 @@ const Dashboard: React.FC = () => {
             try {
                 const response = await sessionService.getActiveSession();
                 if (response.success && response.data) {
-                    // Only redirect students directly to session
-                    // Teachers should see dashboard with controls and QR code
+
                     if (user?.role === 'Student') {
                         navigate(`/session/${response.data.code}`);
                     }
@@ -52,7 +52,7 @@ const Dashboard: React.FC = () => {
         const fetchPastSessions = async () => {
             if (user?.role === 'Student') {
                 try {
-                    // We need to implement this in service/backend first
+
                     const response = await sessionService.getStudentSessions();
                     if (response.success) {
                         setPastSessions(response.data);
@@ -66,7 +66,7 @@ const Dashboard: React.FC = () => {
         fetchActiveSession();
         fetchPastSessions();
 
-        // For teachers, also fetch active session for QR code display
+
         const fetchActiveSessionForQR = async () => {
             if (user?.role === 'Teacher') {
                 try {
@@ -153,7 +153,7 @@ const Dashboard: React.FC = () => {
                     Vi-SlideS
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
-                    {/* Premium Avatar Trigger */}
+
                     <div
                         style={{
                             cursor: 'pointer',
@@ -190,7 +190,6 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Premium Dropdown Menu */}
                     {showUserMenu && (
                         <div className="glass-card slide-in" style={{
                             position: 'absolute',
@@ -267,7 +266,6 @@ const Dashboard: React.FC = () => {
                     )}
                 </div>
 
-                {/* Quick Actions Grid */}
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
@@ -332,7 +330,6 @@ const Dashboard: React.FC = () => {
                     )}
                 </div>
 
-                {/* Certificates Modal */}
                 {
                     showCertModal && (
                         <div className="modal-overlay fade-in" style={{
@@ -397,7 +394,6 @@ const Dashboard: React.FC = () => {
                 />
             )}
 
-            {/* QR Code Modal */}
             {showQRModal && activeSession && (
                 <div className="modal-overlay fade-in" style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -456,7 +452,6 @@ const Dashboard: React.FC = () => {
                 </div>
             )}
 
-            {/* Certificates Section for Students */}
 
         </div >
     );

@@ -5,24 +5,46 @@ import { GoogleLogin } from '@react-oauth/google';
 import { authService } from '../services/authService';
 import './Auth.css';
 
+// --- SVG Icon Components ---
+const EyeIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+    </svg>
+);
+
+const EyeOffIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+        <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+);
+
+const AlertIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+);
+
+const BrainIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z" />
+        <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z" />
+    </svg>
+);
+
 const Login: React.FC = () => {
-    const [formData, setFormData] = useState({
-        email: '',
-        password: ''
-    });
-    const { login } = useAuth();
-    // Actually AuthContext login takes LoginData {email, password}. Google login returns token/user directly.
-    // I should probably manually handle the state update here or add a googleLogin method to context.
-    // For now, let's just handle it here by setting session and reloading/updating context.
-    // Wait, AuthContext sets state on login. I should probably add googleLogin to context or just update user manually.
-    // Let's use the 'login' from context if possible, but it expects email/pass.
-    // Better to update AuthContext to force set user.
-    // Let's check AuthContext again. It has setUser/updateUser.
-
-    // Correction: AuthContext has `login` function which does the API call. 
-    // I will manually call authService.googleLogin, then update context.
-
     const navigate = useNavigate();
+    const { login } = useAuth();
+
+    const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -34,12 +56,11 @@ const Login: React.FC = () => {
         e.preventDefault();
         setError('');
         setLoading(true);
-
         try {
             await login(formData);
             navigate('/dashboard');
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Login failed. Please try again.');
+            setError(err.response?.data?.message || 'Invalid email or password.');
         } finally {
             setLoading(false);
         }
@@ -49,132 +70,157 @@ const Login: React.FC = () => {
         try {
             const res = await authService.googleLogin(credentialResponse.credential);
             if (res.success) {
-                // Manually update session storage and context since we bypassed context.login
                 sessionStorage.setItem('token', res.token);
                 sessionStorage.setItem('user', JSON.stringify(res.user));
-                window.location.href = '/dashboard'; // Hard reload to ensure context picks up or use proper context method
+                window.location.href = '/dashboard';
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Google Login failed');
+            setError(err.response?.data?.message || 'Google authentication failed.');
         }
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-background">
-                <div className="gradient-orb orb-1"></div>
-                <div className="gradient-orb orb-2"></div>
-                <div className="gradient-orb orb-3"></div>
-            </div>
+        <div className="nexus-layout">
+            <div className="ambient-orb orb-cyan" />
+            <div className="ambient-orb orb-indigo" />
+            <div className="ambient-grid" />
 
-            <div className="auth-content fade-in">
-                <div className="auth-card glass-card">
-                    <div className="auth-header">
-                        <h1 className="auth-title">Welcome Back</h1>
-                        <p className="auth-subtitle">Sign in to continue to Vi-SlideS</p>
+            <div className="glass-container fade-in">
+
+                {/* ── Left Panel ── */}
+                <div className="glass-showcase">
+                    <div className="showcase-inner">
+
+                        <div className="logo-badge">
+                            <BrainIcon />
+                            <span>Vi-SlideS AI</span>
+                        </div>
+
+                        <h2 className="showcase-big-text">
+                            Teach<br />
+                            <em>smarter.</em>
+                        </h2>
+
+                        <p className="showcase-tagline">
+                            Cognitive insights for the<br />modern classroom
+                        </p>
+
+                        <div className="feature-list">
+                            {[
+                                'AI-powered question analysis',
+                                'Real-time classroom feedback',
+                                'Adaptive slide generation',
+                            ].map((f) => (
+                                <div className="feature-item" key={f}>
+                                    <span className="feature-dot" />
+                                    <span>{f}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="stat-strip">
+                            <div className="stat-item">
+                                <span className="stat-value">12k+</span>
+                                <span className="stat-label">Educators</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-value">98%</span>
+                                <span className="stat-label">Accuracy</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-value">4.9★</span>
+                                <span className="stat-label">Rating</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                {/* ── Right Panel ── */}
+                <div className="glass-form-area">
+                    <div className="form-header">
+                        <h1>Welcome back</h1>
+                        <p>Sign in to continue to your dashboard</p>
                     </div>
 
                     {error && (
-                        <div className="alert alert-error slide-in">
-                            {error}
+                        <div className="alert-box" role="alert">
+                            <AlertIcon />
+                            <span>{error}</span>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="auth-form">
-                        <div className="form-group">
-                            <label htmlFor="email" className="form-label">Email Address</label>
+                    <form onSubmit={handleSubmit} className="nexus-form" noValidate>
+                        <div className="input-group">
+                            <label htmlFor="email">Email address</label>
                             <input
                                 type="email"
                                 id="email"
                                 name="email"
-                                className="form-input"
-                                placeholder="you@example.com"
+                                placeholder="name@institution.edu"
                                 value={formData.email}
                                 onChange={onChange}
+                                autoComplete="email"
                                 required
                             />
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="password" className="form-label">Password</label>
-                            <div style={{ position: 'relative' }}>
+                        <div className="input-group">
+                            <div className="label-row">
+                                <label htmlFor="password">Password</label>
+                                <Link to="/forgot-password" className="forgot-link">Forgot?</Link>
+                            </div>
+                            <div className="password-wrapper">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     id="password"
                                     name="password"
-                                    className="form-input"
-                                    placeholder="••••••••"
-                                    style={{ paddingRight: '2.5rem' }}
+                                    placeholder="Enter your password"
                                     value={formData.password}
                                     onChange={onChange}
+                                    autoComplete="current-password"
                                     required
                                 />
                                 <button
                                     type="button"
+                                    className="eye-btn"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    style={{
-                                        position: 'absolute',
-                                        right: '10px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        background: 'none',
-                                        border: 'none',
-                                        color: 'var(--color-primary)',
-                                        cursor: 'pointer',
-                                        fontSize: '1.2rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        zIndex: 10
-                                    }}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                                 >
-                                    {showPassword ? '👁️' : '🙈'}
+                                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                                 </button>
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            className="btn btn-primary btn-block"
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <>
-                                    <span className="spinner"></span>
-                                    <span style={{ marginLeft: '0.5rem' }}>Signing in...</span>
-                                </>
-                            ) : (
-                                'Sign In'
-                            )}
+                        <button type="submit" className="neon-btn" disabled={loading}>
+                            {loading ? <span className="spinner-mini" aria-hidden="true" /> : 'Sign In'}
                         </button>
                     </form>
 
-                    <div style={{ margin: '1.5rem 0', textAlign: 'center', position: 'relative' }}>
-                        <span style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '0 10px', color: '#ccc', position: 'relative', zIndex: 1, borderRadius: '4px' }}>OR</span>
-                        <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'rgba(255, 255, 255, 0.1)', zIndex: 0 }}></div>
+                    <div className="nexus-divider">
+                        <span>or continue with</span>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                    <div className="google-btn-wrapper">
                         <GoogleLogin
                             onSuccess={handleGoogleSuccess}
-                            onError={() => setError('Google Login Failed')}
+                            onError={() => setError('Google authentication failed.')}
                             theme="filled_black"
-                            shape="pill"
-                            width="250"
+                            size="large"
+                            shape="rectangular"
+                            width="100%"
+                            text="continue_with"
                         />
                     </div>
 
-                    <div className="auth-footer">
-                        <p>
-                            Don't have an account?{' '}
-                            <Link to="/register" className="auth-link">
-                                Sign Up
-                            </Link>
-                        </p>
-                    </div>
-                </div >
-            </div >
-        </div >
+                    <p className="bottom-text">
+                        No account?{' '}
+                        <Link to="/register">Create one</Link>
+                    </p>
+                </div>
+
+            </div>
+        </div>
     );
 };
 

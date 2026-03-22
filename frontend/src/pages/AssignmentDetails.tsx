@@ -39,20 +39,17 @@ const AssignmentDetails: React.FC = () => {
 
         setLoading(true);
         try {
-            // Fetch assignment details
             const assignmentRes = await assignmentService.getAssignmentById(id);
             if (assignmentRes.success) {
                 setAssignment(assignmentRes.data);
             }
 
             if (isTeacher) {
-                // Fetch all submissions for this assignment
                 const submissionsRes = await submissionService.getSubmissionsByAssignment(id);
                 if (submissionsRes.success) {
                     setSubmissions(submissionsRes.data);
                 }
             } else {
-                // Fetch student's own submissions
                 const mySubmissionsRes = await submissionService.getMySubmissions();
                 if (mySubmissionsRes.success) {
                     const mySubmissionForThis = mySubmissionsRes.data.find(s => s.assignment._id === id);
@@ -114,7 +111,7 @@ const AssignmentDetails: React.FC = () => {
                 setGradingSubmission(null);
                 setMarks(0);
                 setFeedback('');
-                fetchData(); // Refresh submissions
+                fetchData();
             }
         } catch (error) {
             console.error('Grade error:', error);
@@ -148,12 +145,11 @@ const AssignmentDetails: React.FC = () => {
     return (
         <div style={{ minHeight: '100vh', background: 'var(--color-bg)', padding: '2rem' }}>
             <div className="container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
-                {/* Header */}
+
                 <button onClick={() => navigate('/assignments')} className="btn btn-secondary" style={{ marginBottom: '1.5rem' }}>
                     ← Back to Assignments
                 </button>
 
-                {/* Assignment Info */}
                 <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
                     <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>{assignment.title}</h1>
                     <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
@@ -168,7 +164,6 @@ const AssignmentDetails: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Student View: Submission Form or View Submission */}
                 {!isTeacher && (
                     <>
                         {mySubmission ? (
@@ -264,7 +259,6 @@ const AssignmentDetails: React.FC = () => {
                     </>
                 )}
 
-                {/* Teacher View: Submissions List */}
                 {isTeacher && (
                     <div className="glass-card" style={{ padding: '2rem' }}>
                         <h3 style={{ marginBottom: '1.5rem' }}>Student Submissions ({submissions.length})</h3>
@@ -356,7 +350,6 @@ const AssignmentDetails: React.FC = () => {
                     </div>
                 )}
 
-                {/* Grading Modal */}
                 {gradingSubmission && (
                     <div style={{
                         position: 'fixed',
@@ -421,7 +414,6 @@ const AssignmentDetails: React.FC = () => {
                     </div>
                 )}
 
-                {/* Toast Notification */}
                 {toast && (
                     <Toast
                         message={toast.message}

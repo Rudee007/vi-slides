@@ -19,7 +19,6 @@ const Assignments: React.FC = () => {
 
     const isTeacher = user?.role?.toLowerCase() === 'teacher';
 
-    // Form state for creating assignment
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -39,7 +38,6 @@ const Assignments: React.FC = () => {
                 setAssignments(assignmentsRes.data);
             }
 
-            // If student, also fetch their submissions
             if (!isTeacher) {
                 const submissionsRes = await submissionService.getMySubmissions();
                 if (submissionsRes.success) {
@@ -226,7 +224,6 @@ const Assignments: React.FC = () => {
                     </div>
                 )}
 
-                {/* Assignments List */}
                 {assignments.length === 0 ? (
                     <div className="glass-card" style={{ padding: '3rem', textAlign: 'center' }}>
                         <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📝</div>
@@ -328,7 +325,6 @@ const Assignments: React.FC = () => {
                     </div>
                 )}
 
-                {/* Toast Notification */}
                 {toast && (
                     <Toast
                         message={toast.message}
@@ -337,7 +333,6 @@ const Assignments: React.FC = () => {
                     />
                 )}
 
-                {/* Edit Assignment Modal */}
                 {showEditModal && selectedAssignment && (
                     <div style={{
                         position: 'fixed',
@@ -421,7 +416,6 @@ const Assignments: React.FC = () => {
                     </div>
                 )}
 
-                {/* Delete Confirmation Modal */}
                 {showDeleteModal && selectedAssignment && (
                     <div style={{
                         position: 'fixed',
