@@ -44,6 +44,12 @@ export const sessionService = {
         return response.data;
     },
 
+    // Add this inside the sessionService object
+    getTeacherSessions: async (): Promise<{ success: boolean; data: Session[] }> => {
+        const response = await api.get('/sessions/teacher/history');
+        return response.data;
+    },
+
     getSessionDetails: async (code: string): Promise<{ success: boolean; data: Session }> => {
         const response = await api.get(`/sessions/${code}`);
         return response.data;
