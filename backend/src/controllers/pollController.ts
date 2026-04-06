@@ -4,9 +4,7 @@ import Session from '../models/Session';
 import { emitToSession } from '../config/socket';
 import User from '../models/User';
 
-// @desc    Create a new poll
-// @route   POST /api/polls
-// @access  Private (Teacher only)
+
 export const createPoll = async (req: Request, res: Response): Promise<void> => {
     try {
         const { question, type, options, sessionId } = req.body;
@@ -68,7 +66,6 @@ export const votePoll = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // Check if user already voted
         const existingResponse = poll.responses.find((r: any) => r.user.toString() === req.user?._id.toString());
         if (existingResponse) {
             res.status(400).json({ success: false, message: 'You have already voted' });
@@ -87,13 +84,11 @@ export const votePoll = async (req: Request, res: Response): Promise<void> => {
 
         await poll.save();
 
-        // Reward points for voting (+20)
         const updatedUser = await User.findByIdAndUpdate(req.user?._id, { $inc: { points: 20 } }, { new: true });
 
         const session = poll.session as any;
         emitToSession(session.code, 'poll_update', poll);
 
-        // Emit points update so leaderboard reflects the change instantly
         if (updatedUser) {
             emitToSession(session.code, 'points_updated', {
                 userId: updatedUser._id,
